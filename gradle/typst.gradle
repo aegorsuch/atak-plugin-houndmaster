@@ -3,16 +3,21 @@ task setupTypst {
     group = "typst"
     description = "Sets up Typst by downloading and extracting the binary."
 
-    def typstUrl = "https://github.com/typst/typst/releases/download/v0.13.1/typst-x86_64-unknown-linux-musl.tar.xz"
+    def isWindows = System.getProperty("os.name").toLowerCase().contains("win")
+    def typstArchive = isWindows ? "typst-x86_64-pc-windows-msvc.zip" : "typst-x86_64-unknown-linux-musl.tar.xz"
+    def typstBinary = isWindows ? "typst.exe" : "typst"
+    def typstUrl = "https://github.com/typst/typst/releases/download/v0.13.1/${typstArchive}"
     def downloadDir = file("${buildDir}/typst")
-    def tarFile = file("${downloadDir}/typst.tar.xz")
+    def archiveFile = file("${downloadDir}/${typstArchive}")
     def extractDir = file("${downloadDir}/extracted")
+    def platformDir = isWindows ? "pc-windows-msvc" : "unknown-linux-musl"
+    def extractedBinary = file("${extractDir}/typst-x86_64-${platformDir}/${typstBinary}")
 
     inputs.property("typstUrl", typstUrl)
     outputs.dir(extractDir)
 
     doLast {
-        if (file("$extractDir/typst-x86_64-unknown-linux-musl/typst").exists()) {
+        if (extractedBinary.exists()) {
             // Already downloaded and extracted.
             return
         }
@@ -23,7 +28,7 @@ task setupTypst {
         }
 
         // Download the Typst archive using curl or wget
-        def downloadCommand = "curl -L $typstUrl -o $tarFile"
+        def downloadCommand = "curl -L $typstUrl -o $archiveFile"
         println "Executing: $downloadCommand"
         def downloadProcess = downloadCommand.execute()
         downloadProcess.waitFor()
@@ -38,7 +43,7 @@ task setupTypst {
         }
 
         // Decompress and extract the tar.xz file using bash commands
-        def extractCommand = "tar -xf $tarFile -C $extractDir"
+        def extractCommand = "tar -xf $archiveFile -C $extractDir"
         println "Executing: $extractCommand"
         def extractProcess = extractCommand.execute()
         extractProcess.waitFor()
@@ -48,7 +53,7 @@ task setupTypst {
         }
 
         // Remove the tar.xz file after extraction
-        tarFile.delete()
+        archiveFile.delete()
     }
 }
 
@@ -58,7 +63,10 @@ task runTypst(dependsOn: setupTypst) {
 
     // Constants, adjust as needed on a per-project basis
     def srcDir = file("$rootDir/docs/user_manual")
-    def extractDir = file("$rootDir/app/build/typst/extracted/typst-x86_64-unknown-linux-musl")
+    def isWindows = System.getProperty("os.name").toLowerCase().contains("win")
+    def typstBinary = isWindows ? "typst.exe" : "typst"
+    def platformDir = isWindows ? "pc-windows-msvc" : "unknown-linux-musl"
+    def extractDir = file("$rootDir/app/build/typst/extracted/typst-x86_64-${platformDir}")
     def assetsDir = file("$rootDir/app/src/main/assets")
 
     doLast {
@@ -97,9 +105,9 @@ task runTypst(dependsOn: setupTypst) {
         typFile.text = fileContent
 
         // Check if 'typst' is available
-        def typstExecutable = 'typst'
+        def typstExecutable = isWindows ? 'typst.exe' : 'typst'
         if (!new File(typstExecutable).exists()) {
-            typstExecutable = "${extractDir}/typst"  // Use the local executable if 'typst' is not found
+            typstExecutable = new File(extractDir, typstBinary).absolutePath
         }
 
         // Run the typst compile command
@@ -131,4 +139,3 @@ if (System.getenv("ATAK_CI") == "1") {
 } else { 
     println("skipping user manual generation");
 }
-

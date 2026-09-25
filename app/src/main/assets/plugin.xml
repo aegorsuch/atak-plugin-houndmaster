@@ -4,7 +4,7 @@
 
     <extension
         type="gov.tak.api.plugin.IPlugin"
-        impl="com.atakmap.android.helloworld.plugin.HelloWorldLifecycle"
+        impl="com.atakmap.android.houndmaster.plugin.HoundmasterLifecycle"
         singleton="true" />
 
 </plugin>

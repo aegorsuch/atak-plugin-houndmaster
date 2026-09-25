@@ -2,7 +2,7 @@
 //
 // PLUGIN_VERSION is the common version name when describing the plugin.
 // ATAK_VERSION   is for the version of ATAK this plugin should be compatible
-//                with some examples include 3.11.0, 3.11.0.civ 3.11.1.fvey
+//                with some houndmasters include 3.11.0, 3.11.0.civ 3.11.1.fvey
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -92,13 +92,13 @@ allprojects {
 def supportedFlavors = 
 [
     [ name : 'civ', default: true ],
-    [ name : 'mil' /** example: true **/],
+    [ name : 'mil' /** houndmaster: true **/],
     [ name : 'gov' ],
 ]
 
 android {
     compileSdk 36
-    namespace 'com.atakmap.android.helloworld.plugin'
+    namespace 'com.atakmap.android.houndmaster.plugin'
 
     buildFeatures {
         buildConfig = true
@@ -128,17 +128,27 @@ android {
 
 
     signingConfigs {
+        def signingProperties = new Properties()
+        def signingFile = rootProject.file('signing.properties')
+        if (signingFile.isFile()) {
+            signingFile.withInputStream { signingProperties.load(it) }
+        }
+        def signingStoreFile = signingProperties.getProperty('storeFile', "${buildDir}/android_keystore")
+        def signingStorePassword = signingProperties.getProperty('storePassword', '')
+        def signingKeyAlias = signingProperties.getProperty('keyAlias', '')
+        def signingKeyPassword = signingProperties.getProperty('keyPassword', '')
+
         debug {
-            storeFile file("${buildDir}/android_keystore")
-            storePassword "tnttnt"
-            keyAlias "wintec_mapping"
-            keyPassword "tnttnt"
+            storeFile file(signingStoreFile)
+            storePassword signingStorePassword
+            keyAlias signingKeyAlias
+            keyPassword signingKeyPassword
         }
         release {
-            storeFile file("${buildDir}/android_keystore")
-            storePassword "tnttnt"
-            keyAlias "wintec_mapping"
-            keyPassword "tnttnt"
+            storeFile file(signingStoreFile)
+            storePassword signingStorePassword
+            keyAlias signingKeyAlias
+            keyPassword signingKeyPassword
         }
     }
 
@@ -175,7 +185,7 @@ android {
                 manifestPlaceholders = [atakApiVersion: "com.atakmap.app@" + ATAK_VERSION + ".${pluginApiFlavor}"]
 
                 // additional variables associated with the flav can be set here once defined above
-                // buildConfigField 'boolean', 'EXAMPLE', "${flav.example}"
+                // buildConfigField 'boolean', 'EXAMPLE', "${flav.houndmaster}"
             }
         }
          // additional variables associated with all flavors can be set here
@@ -212,7 +222,7 @@ android {
         // Move the build types to build-types/<type>
         // For instance, build-types/debug/java, build-types/debug/AndroidManifest.xml, ...
         // This moves them out of them default location under src/<type>/... which would
-        // conflict with src/ being used by the main source set.
+        // conflict with src/being used by the main source set.
         // Adding new build types or product flavors should be accompanied
         // by a similar customization.
         debug.setRoot('build-types/debug')
@@ -250,7 +260,7 @@ dependencies {
     // bad things happen in the release builds after proguarding
     implementation ('androidx.recyclerview:recyclerview:1.1.0') {
         exclude module: 'collection'
-        // this is an example of a local exclude since androidx.core is supplied by core atak
+        // this is an houndmaster of a local exclude since androidx.core is supplied by core atak
         exclude module: 'core'
         exclude module: 'lifecycle'
         exclude module: 'core-common'
@@ -260,6 +270,11 @@ dependencies {
 
     androidTestImplementation 'androidx.lifecycle:lifecycle-runtime:2.2.0'
 
+    // Add JUnit and Mockito for unit tests
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.mockito:mockito-core:4.11.0'
+    testImplementation 'org.mockito:mockito-inline:4.11.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:4.11.0'
 }
 
 configurations.all {
