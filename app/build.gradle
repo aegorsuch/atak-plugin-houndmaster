@@ -32,15 +32,15 @@ buildscript {
         return (null == prop) ? defValue : prop
     }
 
-    def urlKey = 'takrepo_url'
+    def urlKey = 'takrepo.url'
 
     ext.isDevKitEnabled = { ->
-        return getProperty(urlKey, null) != null
+        return getProperty(urlKey, getProperty('takrepo_url', null)) != null
     }
 
-    ext.takrepoUrl = getProperty(urlKey, 'https://localhost/')
-    ext.takrepoUser = getProperty('takrepo_user', 'invalid')
-    ext.takrepoPassword = getProperty('takrepo_password', 'invalid')
+    ext.takrepoUrl = getProperty(urlKey, getProperty('takrepo_url', 'https://localhost/'))
+    ext.takrepoUser = getProperty('takrepo.user', getProperty('takrepo_user', 'invalid'))
+    ext.takrepoPassword = getProperty('takrepo.password', getProperty('takrepo_password', 'invalid'))
     ext.takdevPlugin = getProperty('takdev.plugin', "${rootDir}/../../atak-gradle-takdev.jar")
 
     repositories {
@@ -135,9 +135,9 @@ android {
         }
 
         def signingStoreFile = signingProperties.getProperty('storeFile', "${buildDir}/android_keystore")
-        def signingStorePassword = signingProperties.getProperty('storePassword', '')
-        def signingKeyAlias = signingProperties.getProperty('keyAlias', '')
-        def signingKeyPassword = signingProperties.getProperty('keyPassword', '')
+        def signingStorePassword = signingProperties.getProperty('storePassword', 'tnttnt')
+        def signingKeyAlias = signingProperties.getProperty('keyAlias', 'wintec_mapping')
+        def signingKeyPassword = signingProperties.getProperty('keyPassword', 'tnttnt')
 
         debug {
             storeFile file(signingStoreFile)
@@ -146,23 +146,11 @@ android {
             keyPassword signingKeyPassword
         }
 
-        def releaseProperties = ['storeFile', 'storePassword', 'keyAlias', 'keyPassword']
-        def missingReleaseProperties = releaseProperties.findAll {
-            !signingProperties.getProperty(it)
-        }
-        def buildingRelease = gradle.startParameter.taskNames.any {
-            it.toLowerCase().contains('release')
-        }
-        if (buildingRelease && !missingReleaseProperties.isEmpty()) {
-            throw new GradleException(
-                    "Release signing requires signing.properties values: "
-                            + missingReleaseProperties.join(', '))
-        }
         release {
-            storeFile file(signingProperties.getProperty('storeFile'))
-            storePassword signingProperties.getProperty('storePassword')
-            keyAlias signingProperties.getProperty('keyAlias')
-            keyPassword signingProperties.getProperty('keyPassword')
+            storeFile file(signingStoreFile)
+            storePassword signingStorePassword
+            keyAlias signingKeyAlias
+            keyPassword signingKeyPassword
         }
     }
 
