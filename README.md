@@ -35,4 +35,8 @@ Incoming chat messages are matched to an order when the message contains both th
 
 The project supports ATAK-CIV, ATAK-GOV, and ATAK-MIL product flavors. Development follows feature branches merged into the government repository's `develop` branch; the personal GitHub repository is maintained as a backup of `develop`.
 
+## Rights
+
+Unlimited Rights granted to TAK Product Center.
+
 ---
