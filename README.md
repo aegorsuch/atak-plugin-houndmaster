@@ -39,4 +39,8 @@ The project supports ATAK-CIV, ATAK-GOV, and ATAK-MIL product flavors. Developme
 
 Unlimited Rights granted to TAK Product Center.
 
+## Point of Contact
+
+Alex Gorsuch on chat.tak.gov or Signal
+
 ---
