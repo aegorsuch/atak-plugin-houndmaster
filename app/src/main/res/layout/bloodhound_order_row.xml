@@ -3,35 +3,52 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="8dp">
+    android:gravity="center_vertical"
+    android:paddingStart="8dp"
+    android:paddingTop="6dp"
+    android:paddingEnd="4dp"
+    android:paddingBottom="6dp">
+
     <TextView
         android:id="@+id/orderTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="2"
-        android:text="Title"
+        android:layout_weight="3"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Target"
         android:textColor="#FFF"
-        android:textSize="16sp" />
+        android:textSize="13sp"
+        android:textStyle="bold" />
     <TextView
         android:id="@+id/orderContact"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="2"
-        android:text="Contact"
-        android:textColor="#FFF"
-        android:textSize="16sp" />
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Recipient"
+        android:textColor="#BDBDBD"
+        android:textSize="13sp" />
     <TextView
         android:id="@+id/orderStatus"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
+        android:layout_marginStart="8dp"
+        android:layout_weight="2"
+        android:ellipsize="end"
+        android:maxLines="1"
         android:text="Status"
         android:textColor="#FFF"
-        android:textSize="16sp" />
-    <Button
-        android:id="@+id/deleteOrderBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Delete" />
-</LinearLayout>
+        android:textSize="13sp" />
 
+    <ImageButton
+        android:id="@+id/deleteOrderBtn"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="4dp"
+        android:background="@android:color/transparent"
+        android:contentDescription="@string/delete_order"
+        android:padding="8dp"
+        android:src="@drawable/ic_delete_order" />
+</LinearLayout>
