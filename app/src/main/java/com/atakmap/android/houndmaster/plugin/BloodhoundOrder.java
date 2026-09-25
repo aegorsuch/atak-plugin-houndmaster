@@ -3,6 +3,7 @@ package com.atakmap.android.houndmaster.plugin;
 public class BloodhoundOrder {
     private final String mapItemTitle;
     private final String contact;
+    private final String contactUid;
     private Status status;
 
     public enum Status {
@@ -12,8 +13,13 @@ public class BloodhoundOrder {
     }
 
     public BloodhoundOrder(String mapItemTitle, String contact, Status status) {
+        this(mapItemTitle, contact, null, status);
+    }
+
+    public BloodhoundOrder(String mapItemTitle, String contact, String contactUid, Status status) {
         this.mapItemTitle = mapItemTitle;
         this.contact = contact;
+        this.contactUid = contactUid;
         this.status = status;
     }
 
@@ -25,6 +31,10 @@ public class BloodhoundOrder {
         return contact;
     }
 
+    public String getContactUid() {
+        return contactUid;
+    }
+
     public Status getStatus() {
         return status;
     }
@@ -33,4 +43,3 @@ public class BloodhoundOrder {
         this.status = status;
     }
 }
-

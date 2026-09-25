@@ -72,39 +72,59 @@ public class BloodhoundOrderManager implements ChatManagerMapComponent.ChatMessa
             return;
         }
 
-        boolean changed = false;
+        String senderUid = message.getString("senderUid");
+        String conversationId = message.getString("conversationId");
+        String senderCallsign = message.getString("senderCallsign");
+        BloodhoundOrder matchedOrder = null;
         for (BloodhoundOrder order : orders) {
-            if (text.toLowerCase().contains(order.getMapItemTitle().toLowerCase())
-                    && (update.contact == null
-                    || update.contact.equalsIgnoreCase(order.getContact())
-                    || text.toLowerCase().contains(order.getContact().toLowerCase()))) {
-                order.setStatus(update.status);
-                changed = true;
+            if (!text.toLowerCase().contains(order.getMapItemTitle().toLowerCase())) {
+                continue;
+            }
+
+            boolean senderMatches = senderMatches(order, senderUid, conversationId, senderCallsign);
+            boolean legacyTextMatches = senderUid == null && conversationId == null
+                    && senderCallsign == null
+                    && text.toLowerCase().contains(order.getContact().toLowerCase());
+            if (senderMatches || legacyTextMatches) {
+                if (matchedOrder != null) {
+                    return;
+                }
+                matchedOrder = order;
             }
         }
-        if (changed) {
+
+        if (matchedOrder != null && matchedOrder.getStatus() != update.status) {
+            matchedOrder.setStatus(update.status);
             notifyOrderChange();
         }
+    }
+
+    private boolean senderMatches(BloodhoundOrder order, String senderUid,
+            String conversationId, String senderCallsign) {
+        String contactUid = order.getContactUid();
+        return (senderUid != null && contactUid != null && contactUid.equals(senderUid))
+                || (conversationId != null && contactUid != null
+                && contactUid.equals(conversationId))
+                || (senderCallsign != null
+                && senderCallsign.equalsIgnoreCase(order.getContact()));
     }
 
     private StatusUpdate getStatusUpdate(String text) {
         String normalized = text.toLowerCase();
         if (normalized.contains("bloodhounding") || normalized.contains("bloodhonding")) {
-            return new StatusUpdate(BloodhoundOrder.Status.Bloodhounding, null);
+            return new StatusUpdate(BloodhoundOrder.Status.Bloodhounding);
         }
         if (normalized.contains("in position")) {
-            return new StatusUpdate(BloodhoundOrder.Status.Complete, null);
+            return new StatusUpdate(BloodhoundOrder.Status.Complete);
         }
         return null;
     }
 
     private static final class StatusUpdate {
         private final BloodhoundOrder.Status status;
-        private final String contact;
 
-        private StatusUpdate(BloodhoundOrder.Status status, String contact) {
+        private StatusUpdate(BloodhoundOrder.Status status) {
             this.status = status;
-            this.contact = contact;
         }
     }
 }
