@@ -170,11 +170,17 @@ public class RecyclerViewDropDown extends DropDownReceiver implements
             android.widget.Toast.makeText(_plugin, "Failed to create CoT event", android.widget.Toast.LENGTH_SHORT).show();
             return;
         }
-        // Do not add a custom <remarks> element after creation
-        // Broadcast the CoT event to all
-        com.atakmap.android.cot.CotMapComponent.getExternalDispatcher().dispatchToBroadcast(cotEvent);
-        android.widget.Toast.makeText(_plugin, "Sent " + mapItem.getTitle(), android.widget.Toast.LENGTH_SHORT).show();
         String contactName = contact.getMetaString("callsign", contact.getTitle());
+        com.atakmap.android.contact.Contact target = com.atakmap.android.contact.Contacts
+                .getInstance().getContactByUuid(contact.getUID());
+        if (target == null) {
+            android.widget.Toast.makeText(_plugin, "No reachable contact for " + contactName,
+                    android.widget.Toast.LENGTH_LONG).show();
+            return;
+        }
+        com.atakmap.android.cot.CotMapComponent.getExternalDispatcher().dispatchToContact(cotEvent, target);
+        android.widget.Toast.makeText(_plugin, "Sent " + mapItem.getTitle() + " to " + contactName,
+                android.widget.Toast.LENGTH_SHORT).show();
         BloodhoundOrder order = new BloodhoundOrder(
                 mapItem.getTitle(),
                 contactName,
