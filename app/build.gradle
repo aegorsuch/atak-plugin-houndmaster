@@ -2,7 +2,7 @@
 //
 // PLUGIN_VERSION is the common version name when describing the plugin.
 // ATAK_VERSION   is for the version of ATAK this plugin should be compatible
-//                with some houndmasters include 3.11.0, 3.11.0.civ 3.11.1.fvey
+//                with some examples including 3.11.0, 3.11.0.civ, and 3.11.1.fvey
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -11,7 +11,7 @@ buildscript {
     ext.PLUGIN_VERSION = "1.0"
     ext.ATAK_VERSION = '5.6.0'
 
-    def takdevVersion = '3.+'
+    def takdevVersion = '2.+'
 
     def getValueFromPropertiesFile = { propFile, key ->
         if(!propFile.isFile() || !propFile.canRead())
@@ -92,7 +92,7 @@ allprojects {
 def supportedFlavors = 
 [
     [ name : 'civ', default: true ],
-    [ name : 'mil' /** houndmaster: true **/],
+    [ name : 'mil' /** example: true **/],
     [ name : 'gov' ],
 ]
 
@@ -133,6 +133,7 @@ android {
         if (signingFile.isFile()) {
             signingFile.withInputStream { signingProperties.load(it) }
         }
+
         def signingStoreFile = signingProperties.getProperty('storeFile', "${buildDir}/android_keystore")
         def signingStorePassword = signingProperties.getProperty('storePassword', '')
         def signingKeyAlias = signingProperties.getProperty('keyAlias', '')
@@ -144,11 +145,24 @@ android {
             keyAlias signingKeyAlias
             keyPassword signingKeyPassword
         }
+
+        def releaseProperties = ['storeFile', 'storePassword', 'keyAlias', 'keyPassword']
+        def missingReleaseProperties = releaseProperties.findAll {
+            !signingProperties.getProperty(it)
+        }
+        def buildingRelease = gradle.startParameter.taskNames.any {
+            it.toLowerCase().contains('release')
+        }
+        if (buildingRelease && !missingReleaseProperties.isEmpty()) {
+            throw new GradleException(
+                    "Release signing requires signing.properties values: "
+                            + missingReleaseProperties.join(', '))
+        }
         release {
-            storeFile file(signingStoreFile)
-            storePassword signingStorePassword
-            keyAlias signingKeyAlias
-            keyPassword signingKeyPassword
+            storeFile file(signingProperties.getProperty('storeFile'))
+            storePassword signingProperties.getProperty('storePassword')
+            keyAlias signingProperties.getProperty('keyAlias')
+            keyPassword signingProperties.getProperty('keyPassword')
         }
     }
 
@@ -185,7 +199,7 @@ android {
                 manifestPlaceholders = [atakApiVersion: "com.atakmap.app@" + ATAK_VERSION + ".${pluginApiFlavor}"]
 
                 // additional variables associated with the flav can be set here once defined above
-                // buildConfigField 'boolean', 'EXAMPLE', "${flav.houndmaster}"
+                // buildConfigField 'boolean', 'EXAMPLE', "${flav.example}"
             }
         }
          // additional variables associated with all flavors can be set here
@@ -222,7 +236,7 @@ android {
         // Move the build types to build-types/<type>
         // For instance, build-types/debug/java, build-types/debug/AndroidManifest.xml, ...
         // This moves them out of them default location under src/<type>/... which would
-        // conflict with src/being used by the main source set.
+        // conflict with src/ being used by the main source set.
         // Adding new build types or product flavors should be accompanied
         // by a similar customization.
         debug.setRoot('build-types/debug')
@@ -260,7 +274,7 @@ dependencies {
     // bad things happen in the release builds after proguarding
     implementation ('androidx.recyclerview:recyclerview:1.1.0') {
         exclude module: 'collection'
-        // this is an houndmaster of a local exclude since androidx.core is supplied by core atak
+        // this is an example of a local exclude since androidx.core is supplied by core atak
         exclude module: 'core'
         exclude module: 'lifecycle'
         exclude module: 'core-common'

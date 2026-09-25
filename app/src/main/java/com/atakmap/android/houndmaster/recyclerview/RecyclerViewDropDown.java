@@ -175,7 +175,11 @@ public class RecyclerViewDropDown extends DropDownReceiver implements
         com.atakmap.android.cot.CotMapComponent.getExternalDispatcher().dispatchToBroadcast(cotEvent);
         android.widget.Toast.makeText(_plugin, "Sent " + mapItem.getTitle(), android.widget.Toast.LENGTH_SHORT).show();
         String contactName = contact.getMetaString("callsign", contact.getTitle());
-        BloodhoundOrder order = new BloodhoundOrder(mapItem.getTitle(), contactName, BloodhoundOrder.Status.Sent);
+        BloodhoundOrder order = new BloodhoundOrder(
+                mapItem.getTitle(),
+                contactName,
+                contact.getUID(),
+                BloodhoundOrder.Status.Sent);
         BloodhoundOrderManager.getInstance().addOrder(order);
     }
 }

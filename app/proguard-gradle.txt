@@ -88,8 +88,7 @@
 
 
 ######################################################################
-## Please change PluginTemplate to accurately reflect the name of your 
-## plugin.  This will help get bug reports to your development group.
+## The package descriptor identifies this plugin in crash reports.
 ######################################################################
 
 -repackageclasses atakplugin.houndmaster
