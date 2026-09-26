@@ -4,29 +4,40 @@ import android.os.Bundle;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import com.atakmap.android.chat.ChatManagerMapComponent;
+import com.atakmap.android.maps.MapItem;
+import com.atakmap.android.maps.MapView;
 
 public class BloodhoundOrderManager implements ChatManagerMapComponent.ChatMessageListener {
     private static final BloodhoundOrderManager INSTANCE = new BloodhoundOrderManager();
     private final List<BloodhoundOrder> orders = new ArrayList<>();
+    private final List<OrderChangeListener> listeners = new ArrayList<>();
+    private MapView mapView;
 
-    // Listener interface and support
     public interface OrderChangeListener {
         void onOrdersChanged();
     }
-    private final List<OrderChangeListener> listeners = new ArrayList<>();
 
-    public void addOrderChangeListener(OrderChangeListener listener) {
+    public synchronized void initialize(MapView mapView) {
+        this.mapView = mapView;
+    }
+
+    public synchronized void addOrderChangeListener(OrderChangeListener listener) {
         listeners.add(listener);
     }
 
-    public void removeOrderChangeListener(OrderChangeListener listener) {
+    public synchronized void removeOrderChangeListener(OrderChangeListener listener) {
         listeners.remove(listener);
     }
 
     private void notifyOrderChange() {
-        for (OrderChangeListener l : listeners) {
+        List<OrderChangeListener> listenerSnapshot;
+        synchronized (this) {
+            listenerSnapshot = new ArrayList<>(listeners);
+        }
+        for (OrderChangeListener l : listenerSnapshot) {
             l.onOrdersChanged();
         }
     }
@@ -37,21 +48,22 @@ public class BloodhoundOrderManager implements ChatManagerMapComponent.ChatMessa
         return INSTANCE;
     }
 
-    public void addOrder(BloodhoundOrder order) {
+    public synchronized void addOrder(BloodhoundOrder order) {
         orders.add(order);
         notifyOrderChange();
     }
 
-    public void removeOrder(BloodhoundOrder order) {
+    public synchronized void removeOrder(BloodhoundOrder order) {
         orders.remove(order);
         notifyOrderChange();
     }
 
-    public List<BloodhoundOrder> getOrders() {
-        return orders;
+    public synchronized List<BloodhoundOrder> getOrders() {
+        refreshMapItemTitles();
+        return new ArrayList<>(orders);
     }
 
-    public BloodhoundOrder findOrder(String mapItemTitle, String contact) {
+    public synchronized BloodhoundOrder findOrder(String mapItemTitle, String contact) {
         for (BloodhoundOrder order : orders) {
             if (order.getMapItemTitle().equals(mapItemTitle) && order.getContact().equals(contact)) {
                 return order;
@@ -72,45 +84,77 @@ public class BloodhoundOrderManager implements ChatManagerMapComponent.ChatMessa
             return;
         }
 
+        String normalizedText = text.toLowerCase(Locale.ROOT);
         String senderUid = message.getString("senderUid");
         String conversationId = message.getString("conversationId");
         String senderCallsign = message.getString("senderCallsign");
-        BloodhoundOrder matchedOrder = null;
-        for (BloodhoundOrder order : orders) {
-            if (!text.toLowerCase().contains(order.getMapItemTitle().toLowerCase())) {
-                continue;
-            }
-
-            boolean senderMatches = senderMatches(order, senderUid, conversationId, senderCallsign);
-            boolean legacyTextMatches = senderUid == null && conversationId == null
-                    && senderCallsign == null
-                    && text.toLowerCase().contains(order.getContact().toLowerCase());
-            if (senderMatches || legacyTextMatches) {
-                if (matchedOrder != null) {
-                    return;
+        synchronized (this) {
+            boolean titlesChanged = refreshMapItemTitles();
+            BloodhoundOrder matchedOrder = null;
+            boolean matchedByUid = false;
+            boolean hasSenderMetadata = senderUid != null || conversationId != null
+                    || senderCallsign != null;
+            for (BloodhoundOrder order : orders) {
+                boolean senderMatches = senderMatches(order, senderUid, conversationId,
+                        senderCallsign);
+                boolean legacyTextMatches = !hasSenderMetadata
+                        && containsWholeValue(normalizedText, order.getContact());
+                if (!senderMatches && !legacyTextMatches) {
+                    continue;
                 }
-                matchedOrder = order;
-            }
-        }
 
-        if (matchedOrder != null && matchedOrder.getStatus() != update.status) {
-            matchedOrder.setStatus(update.status);
-            notifyOrderChange();
+                String targetUid = order.getMapItemUid();
+                boolean targetUidMatches = targetUid != null
+                        && containsWholeValue(normalizedText, targetUid);
+                boolean targetTitleMatches = containsWholeValue(normalizedText, order.getMapItemTitle());
+                if (!targetUidMatches && !targetTitleMatches) {
+                    continue;
+                }
+
+                if (targetUidMatches) {
+                    if (matchedByUid) {
+                        if (titlesChanged) {
+                            notifyOrderChange();
+                        }
+                        return;
+                    }
+                    matchedOrder = order;
+                    matchedByUid = true;
+                } else if (!matchedByUid) {
+                    if (matchedOrder != null) {
+                        if (titlesChanged) {
+                            notifyOrderChange();
+                        }
+                        return;
+                    }
+                    matchedOrder = order;
+                }
+            }
+
+            if (matchedOrder != null && matchedOrder.getStatus() != update.status) {
+                matchedOrder.setStatus(update.status);
+                notifyOrderChange();
+            } else if (titlesChanged) {
+                notifyOrderChange();
+            }
         }
     }
 
     private boolean senderMatches(BloodhoundOrder order, String senderUid,
             String conversationId, String senderCallsign) {
         String contactUid = order.getContactUid();
-        return (senderUid != null && contactUid != null && contactUid.equals(senderUid))
-                || (conversationId != null && contactUid != null
-                && contactUid.equals(conversationId))
-                || (senderCallsign != null
-                && senderCallsign.equalsIgnoreCase(order.getContact()));
+        if (senderUid != null) {
+            return contactUid != null && contactUid.equals(senderUid);
+        }
+        boolean conversationMatches = conversationId != null && contactUid != null
+                && contactUid.equals(conversationId);
+        boolean callsignMatches = senderCallsign != null && order.getContact() != null
+                && senderCallsign.equalsIgnoreCase(order.getContact());
+        return conversationMatches || callsignMatches;
     }
 
     private StatusUpdate getStatusUpdate(String text) {
-        String normalized = text.toLowerCase();
+        String normalized = text.toLowerCase(Locale.ROOT);
         if (normalized.contains("bloodhounding") || normalized.contains("bloodhonding")) {
             return new StatusUpdate(BloodhoundOrder.Status.Bloodhounding);
         }
@@ -118,6 +162,45 @@ public class BloodhoundOrderManager implements ChatManagerMapComponent.ChatMessa
             return new StatusUpdate(BloodhoundOrder.Status.Complete);
         }
         return null;
+    }
+
+    private boolean containsWholeValue(String normalizedText, String value) {
+        if (value == null || value.isEmpty()) {
+            return false;
+        }
+
+        String normalizedValue = value.toLowerCase(Locale.ROOT);
+        int index = normalizedText.indexOf(normalizedValue);
+        while (index >= 0) {
+            int end = index + normalizedValue.length();
+            boolean startsAtBoundary = index == 0
+                    || !Character.isLetterOrDigit(normalizedText.charAt(index - 1));
+            boolean endsAtBoundary = end == normalizedText.length()
+                    || !Character.isLetterOrDigit(normalizedText.charAt(end));
+            if (startsAtBoundary && endsAtBoundary) {
+                return true;
+            }
+            index = normalizedText.indexOf(normalizedValue, index + 1);
+        }
+        return false;
+    }
+
+    private boolean refreshMapItemTitles() {
+        if (mapView == null) {
+            return false;
+        }
+
+        boolean changed = false;
+        for (BloodhoundOrder order : orders) {
+            String uid = order.getMapItemUid();
+            MapItem mapItem = uid == null ? null : mapView.getMapItem(uid);
+            String currentTitle = mapItem == null ? null : mapItem.getTitle();
+            if (currentTitle != null && !currentTitle.equals(order.getMapItemTitle())) {
+                order.setMapItemTitle(currentTitle);
+                changed = true;
+            }
+        }
+        return changed;
     }
 
     private static final class StatusUpdate {

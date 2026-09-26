@@ -8,6 +8,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import java.util.ArrayList;
 import java.util.List;
 
 public class BloodhoundOrderAdapter extends RecyclerView.Adapter<BloodhoundOrderAdapter.OrderViewHolder> {
@@ -19,7 +20,7 @@ public class BloodhoundOrderAdapter extends RecyclerView.Adapter<BloodhoundOrder
     private final android.content.Context dialogContext;
     public BloodhoundOrderAdapter(List<BloodhoundOrder> orders,
             OnDeleteClickListener deleteClickListener, android.content.Context dialogContext) {
-        this.orders = orders;
+        this.orders = new ArrayList<>(orders);
         this.deleteClickListener = deleteClickListener;
         this.dialogContext = dialogContext;
     }
@@ -46,6 +47,11 @@ public class BloodhoundOrderAdapter extends RecyclerView.Adapter<BloodhoundOrder
     @Override
     public int getItemCount() {
         return orders.size();
+    }
+
+    public void setOrders(List<BloodhoundOrder> updatedOrders) {
+        orders.clear();
+        orders.addAll(updatedOrders);
     }
     static class OrderViewHolder extends RecyclerView.ViewHolder {
         TextView title, contact, status;

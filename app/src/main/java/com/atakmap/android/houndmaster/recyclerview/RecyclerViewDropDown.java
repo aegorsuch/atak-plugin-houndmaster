@@ -183,6 +183,7 @@ public class RecyclerViewDropDown extends DropDownReceiver implements
                 android.widget.Toast.LENGTH_SHORT).show();
         BloodhoundOrder order = new BloodhoundOrder(
                 mapItem.getTitle(),
+                mapItem.getUID(),
                 contactName,
                 contact.getUID(),
                 BloodhoundOrder.Status.Sent);
