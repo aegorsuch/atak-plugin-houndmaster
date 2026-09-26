@@ -22,7 +22,7 @@ The dashboard displays one of three statuses:
 | **Active** | The contact replied with `Bloodhounding` and is working the order. The parser also accepts the observed misspelling `Bloodhonding`. |
 | **Complete** | The contact replied with `In Position`, indicating the order is complete. |
 
-Incoming chat messages are matched to an order when the message contains both the target map item's title and the contact's name. Matching status replies update the dashboard automatically.
+Incoming status messages are matched first by the assigned contact's UID and the target's UID when those IDs are present in the message. For existing replies that identify the target by title, Houndmaster uses the assigned sender identity and updates only an unambiguous match. If a tracked map item's title changes, its saved UID lets Houndmaster use the current title.
 
 ## Managing Orders
 

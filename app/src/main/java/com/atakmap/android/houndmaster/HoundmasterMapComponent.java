@@ -21,6 +21,7 @@ public class HoundmasterMapComponent extends DropDownMapComponent {
     @Override
     public void onCreate(Context context, Intent intent, MapView view) {
         super.onCreate(context, intent, view);
+        orderManager.initialize(view);
         ChatManagerMapComponent.getInstance().addChatMessageListener(orderManager);
 
         HoundmasterDropDownReceiver receiver =

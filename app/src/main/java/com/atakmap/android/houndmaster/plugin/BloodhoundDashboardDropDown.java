@@ -26,7 +26,10 @@ public class BloodhoundDashboardDropDown extends DropDownReceiver {
         adapter = new BloodhoundOrderAdapter(orderManager.getOrders(), orderManager::removeOrder,
                 mapView.getContext());
         rv.setAdapter(adapter);
-        orderChangeListener = adapter::notifyDataSetChanged;
+        orderChangeListener = () -> mapView.post(() -> {
+            adapter.setOrders(orderManager.getOrders());
+            adapter.notifyDataSetChanged();
+        });
         orderManager.addOrderChangeListener(orderChangeListener);
 
         // Set up Add new Bloodhound order button
