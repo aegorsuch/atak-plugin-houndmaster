@@ -2,9 +2,7 @@ package com.atakmap.android.houndmaster.recyclerview;
 
 import android.content.Context;
 import android.content.Intent;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView.LayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 
@@ -26,7 +24,7 @@ import com.atakmap.android.houndmaster.plugin.BloodhoundDashboardDropDown;
  */
 public class RecyclerViewDropDown extends DropDownReceiver implements
         MapEventDispatcher.MapEventDispatchListener,
-        View.OnClickListener, TimeListener {
+        TimeListener {
 
     private final MapView _mapView;
     private final Context _plugin;
@@ -34,7 +32,6 @@ public class RecyclerViewDropDown extends DropDownReceiver implements
     private final View _view;
     private final RecyclerView _rView;
     private final RecyclerViewAdapter _adapter;
-    private final View _vBtn, _hBtn, _gBtn;
     private static final BloodhoundOrderManager orderManager = BloodhoundOrderManager.getInstance();
 
     public RecyclerViewDropDown(MapView mapView, Context plugin) {
@@ -48,13 +45,6 @@ public class RecyclerViewDropDown extends DropDownReceiver implements
         _rView.setAdapter(_adapter);
         _rView.setLayoutManager(new LinearLayoutManager(_plugin,
                 LinearLayoutManager.VERTICAL, false));
-        _vBtn = _view.findViewById(R.id.vertical);
-        _vBtn.setSelected(true);
-        _vBtn.setOnClickListener(this);
-        _hBtn = _view.findViewById(R.id.horizontal);
-        _hBtn.setOnClickListener(this);
-        _gBtn = _view.findViewById(R.id.grid);
-        _gBtn.setOnClickListener(this);
         // Add map listeners
         _mapView.getMapEventDispatcher().addMapEventListener(
                 MapEvent.ITEM_ADDED, this);
@@ -103,29 +93,6 @@ public class RecyclerViewDropDown extends DropDownReceiver implements
 
     @Override
     public void onReceive(Context ctx, Intent intent) {
-    }
-
-    @Override
-    public void onClick(View v) {
-        // Switch user list between vertical, horizontal, and grid mode
-        _vBtn.setSelected(false);
-        _hBtn.setSelected(false);
-        _gBtn.setSelected(false);
-        LayoutManager mgr;
-        if (v == _vBtn)
-            mgr = new LinearLayoutManager(_plugin,
-                    LinearLayoutManager.VERTICAL, false);
-        else if (v == _hBtn)
-            mgr = new LinearLayoutManager(_plugin,
-                    LinearLayoutManager.HORIZONTAL, false);
-        else if (v == _gBtn)
-            mgr = new GridLayoutManager(_plugin, 3);
-        else
-            return;
-        v.setSelected(true);
-        _rView.setLayoutManager(mgr);
-        _adapter.setListMode(v == _vBtn);
-        _rView.getRecycledViewPool().clear();
     }
 
     @Override
