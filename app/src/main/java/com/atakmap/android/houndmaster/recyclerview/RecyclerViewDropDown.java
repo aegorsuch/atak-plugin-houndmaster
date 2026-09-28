@@ -129,10 +129,21 @@ public class RecyclerViewDropDown extends DropDownReceiver implements
 
     // Add this method to handle sending the Map Item to the Contact
     private void sendMapItemToContact(MapItem mapItem, MapItem contact) {
-        // Set remarks as a meta value before CoT creation
+        // Tag the outgoing CoT without permanently clobbering the operator's remarks
+        final boolean hadRemarks = mapItem.hasMetaValue("remarks");
+        final String priorRemarks = mapItem.getMetaString("remarks", null);
         mapItem.setMetaString("remarks", "#houndmaster");
-        // Serialize the MapItem to a CoT event
-        com.atakmap.coremap.cot.event.CotEvent cotEvent = com.atakmap.android.importexport.CotEventFactory.createCotEvent(mapItem);
+
+        com.atakmap.coremap.cot.event.CotEvent cotEvent;
+        try {
+            cotEvent = com.atakmap.android.importexport.CotEventFactory.createCotEvent(mapItem);
+        } finally {
+            if (hadRemarks)
+                mapItem.setMetaString("remarks", priorRemarks);
+            else
+                mapItem.removeMetaData("remarks");
+        }
+
         if (cotEvent == null) {
             android.widget.Toast.makeText(_plugin, "Failed to create CoT event", android.widget.Toast.LENGTH_SHORT).show();
             return;

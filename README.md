@@ -33,7 +33,13 @@ Incoming status messages are matched first by the assigned contact's UID and the
 
 ## Release Targets
 
-The project supports ATAK-CIV, ATAK-GOV, and ATAK-MIL product flavors. Development follows feature branches merged into the government repository's `develop` branch; the personal GitHub repository is maintained as a backup of `develop`.
+The project supports ATAK-CIV, ATAK-GOV, and ATAK-MIL product flavors.
+
+## Repositories
+
+The TAK Forge repository (`git.tak.gov`) is canonical. The GitHub repository is a secondary mirror maintained as a backup of `develop`.
+
+Development follows feature branches merged into the canonical repository's `develop` branch, which is then pushed to the GitHub mirror.
 
 ## Rights
 
