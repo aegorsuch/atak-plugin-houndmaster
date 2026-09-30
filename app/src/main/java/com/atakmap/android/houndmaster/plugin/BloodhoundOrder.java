@@ -60,4 +60,11 @@ public class BloodhoundOrder {
     public void setStatus(Status status) {
         this.status = status;
     }
+
+    public boolean advanceTo(Status nextStatus) {
+        if (nextStatus.ordinal() <= status.ordinal())
+            return false;
+        status = nextStatus;
+        return true;
+    }
 }

@@ -1,9 +1,12 @@
 package com.atakmap.android.houndmaster.recyclerview;
 
 import android.content.Context;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -21,19 +24,20 @@ import com.atakmap.coremap.maps.time.CoordinatedTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Adapter used to display content in a RecyclerView
  */
 public class RecyclerViewAdapter extends RecyclerView.Adapter {
 
-    private static final String TAG = "TimelineMissionAdapter";
-
     private final MapView _mapView;
     private final LayoutInflater _inflater;
+    private final List<MapItem> allItems = new ArrayList<>();
     private final List<MapItem> _items = new ArrayList<>();
     private boolean _listMode = true;
     private final boolean contactsOnly;
+    private String query = "";
 
     private OnItemSelectedListener onItemSelectedListener;
 
@@ -45,43 +49,79 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter {
         _inflater = LayoutInflater.from(plugin);
         this.contactsOnly = contactsOnly;
 
-        addItems(mapView.getRootGroup());
+        refreshItems();
     }
 
-    public void addItem(MapItem item) {
-        _items.add(item);
+    public void refreshItems() {
+        allItems.clear();
+        collectItems(_mapView.getRootGroup());
+        Collections.sort(allItems, (a, b) -> {
+            String first = a.getTitle() == null ? "" : a.getTitle();
+            String second = b.getTitle() == null ? "" : b.getTitle();
+            return first.compareToIgnoreCase(second);
+        });
+        filterItems();
     }
 
-    public void removeItem(MapItem item) {
-        _items.remove(item);
+    public void setQuery(String query) {
+        this.query = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
+        filterItems();
     }
 
-    private void addItems(MapGroup group) {
-        for (MapItem item : group.getItems()) {
-            String type = item.getType();
-            boolean is2525D = type != null && type.startsWith("a-");
-            boolean isBMP = "b-m-p-s-p-i".equals(type);
-            boolean isContact = item.hasMetaValue("atakRoleType");
-            if (contactsOnly) {
-                if (isContact) _items.add(item);
-            } else {
-                if ((is2525D || isBMP) && !isContact) _items.add(item);
+    public void bindSearch(View picker) {
+        EditText search = picker.findViewById(R.id.recyclerViewSearch);
+        search.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence text, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence text, int start, int before, int count) {
+                setQuery(text.toString());
             }
+
+            @Override
+            public void afterTextChanged(Editable text) {}
+        });
+    }
+
+    private void filterItems() {
+        _items.clear();
+        for (MapItem item : allItems) {
+            if (matchesQuery(item, query)) {
+                _items.add(item);
+            }
+        }
+        notifyDataSetChanged();
+    }
+
+    static boolean matchesQuery(MapItem item, String query) {
+        if (query.isEmpty())
+            return true;
+        String title = item.getTitle();
+        String callsign = item.getMetaString("callsign", null);
+        return title != null && title.toLowerCase(Locale.ROOT).contains(query)
+                || callsign != null && callsign.toLowerCase(Locale.ROOT).contains(query);
+    }
+
+    private void collectItems(MapGroup group) {
+        for (MapItem item : group.getItems()) {
+            if (isEligible(item, contactsOnly))
+                allItems.add(item);
         }
         for (MapGroup grp : group.getChildGroups()) {
-            addItems(grp);
+            collectItems(grp);
         }
-        // Sort alphabetically by title after collecting all items
-        Collections.sort(_items, new java.util.Comparator<MapItem>() {
-            @Override
-            public int compare(MapItem a, MapItem b) {
-                String t1 = a.getTitle();
-                String t2 = b.getTitle();
-                if (t1 == null) t1 = "";
-                if (t2 == null) t2 = "";
-                return t1.compareToIgnoreCase(t2);
-            }
-        });
+    }
+
+    public static boolean isEligible(MapItem item, boolean contactsOnly) {
+        if (item == null)
+            return false;
+        boolean isContact = item.hasMetaValue("atakRoleType");
+        if (contactsOnly)
+            return isContact;
+        String type = item.getType();
+        return !isContact && (type != null && type.startsWith("a-")
+                || "b-m-p-s-p-i".equals(type));
     }
 
     public void setListMode(boolean listMode) {

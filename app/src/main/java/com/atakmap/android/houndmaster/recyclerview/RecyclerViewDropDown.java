@@ -42,6 +42,7 @@ public class RecyclerViewDropDown extends DropDownReceiver implements
                 mapView, false);
         _rView = _view.findViewById(R.id.rView);
         _adapter = new RecyclerViewAdapter(_mapView, _plugin);
+        _adapter.bindSearch(_view);
         _rView.setAdapter(_adapter);
         _rView.setLayoutManager(new LinearLayoutManager(_plugin,
                 LinearLayoutManager.VERTICAL, false));
@@ -97,23 +98,7 @@ public class RecyclerViewDropDown extends DropDownReceiver implements
 
     @Override
     public void onMapEvent(MapEvent event) {
-        String type = event.getType();
-        MapItem item = event.getItem();
-        if (item == null || !item.hasMetaValue("atakRoleType"))
-            return;
-
-        if (MapEvent.ITEM_ADDED.equals(type))
-            _adapter.addItem(item);
-        else if (MapEvent.ITEM_REMOVED.equals(type))
-            _adapter.removeItem(item);
-
-        _mapView.post(new Runnable() {
-            @Override
-            public void run() {
-                if (isVisible())
-                    _adapter.notifyDataSetChanged();
-            }
-        });
+        _mapView.post(() -> _adapter.refreshItems());
     }
 
     public void show() {

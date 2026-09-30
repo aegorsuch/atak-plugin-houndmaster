@@ -26,12 +26,15 @@ Replies are case-insensitive, and `RGR`, `Roger`, and `nPos` must appear as stan
 
 Incoming status messages are matched first by the assigned contact's UID and the target's UID when those IDs are present in the message. For existing replies that identify the target by title, Houndmaster uses the assigned sender identity and updates only an unambiguous match. A reply that names no target, such as a bare `RGR`, updates the sender's order only when that contact has exactly one open order; otherwise it is ignored. If a tracked map item's title changes, its saved UID lets Houndmaster use the current title.
 
+Statuses only move forward: a late `Roger` cannot reopen a completed order.
+
 ## Managing Orders
 
 - Orders are shown in a compact single-line list with target, recipient, and status.
 - Tap the trash icon to delete an order.
 - Deletion requires confirmation before the order is removed.
 - The dashboard refreshes when an order is added, deleted, or updated by an incoming status message.
+- The target and contact lists can be searched by title or callsign and update when eligible map items appear or disappear.
 
 ## Release Targets
 

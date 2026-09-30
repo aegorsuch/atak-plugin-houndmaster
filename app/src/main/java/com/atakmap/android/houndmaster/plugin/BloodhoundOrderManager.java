@@ -142,14 +142,13 @@ public class BloodhoundOrderManager implements ChatManagerMapComponent.ChatMessa
                 }
             }
 
-            // Short replies like "RGR" name no target; accept them only when the
-            // sender has exactly one open order.
-            if (matchedOrder == null && senderOnlyCount == 1) {
+            // A targetless reply can only identify an order when the sender has one open order.
+            if (matchedOrder == null && senderOnlyCount == 1
+                    && isBareStatusReply(normalizedText)) {
                 matchedOrder = senderOnlyCandidate;
             }
 
-            if (matchedOrder != null && matchedOrder.getStatus() != update.status) {
-                matchedOrder.setStatus(update.status);
+            if (matchedOrder != null && matchedOrder.advanceTo(update.status)) {
                 notifyOrderChange();
             } else if (titlesChanged) {
                 notifyOrderChange();
@@ -186,6 +185,11 @@ public class BloodhoundOrderManager implements ChatManagerMapComponent.ChatMessa
             return new StatusUpdate(BloodhoundOrder.Status.Complete);
         }
         return null;
+    }
+
+    private boolean isBareStatusReply(String normalizedText) {
+        return normalizedText.trim().matches(
+                "(rgr|roger|bloodhounding|bloodhonding|npos|in position)[.!]?");
     }
 
     private boolean containsWholeValue(String normalizedText, String value) {
