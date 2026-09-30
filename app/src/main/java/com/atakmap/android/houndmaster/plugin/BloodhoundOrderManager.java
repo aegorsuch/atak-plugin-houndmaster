@@ -86,12 +86,18 @@ public class BloodhoundOrderManager implements ChatManagerMapComponent.ChatMessa
 
         String normalizedText = text.toLowerCase(Locale.ROOT);
         String senderUid = message.getString("senderUid");
+        // ATAK also reports this device's own outgoing chats, including the order prompt.
+        if (senderUid != null && senderUid.equals(MapView.getDeviceUid())) {
+            return;
+        }
         String conversationId = message.getString("conversationId");
         String senderCallsign = message.getString("senderCallsign");
         synchronized (this) {
             boolean titlesChanged = refreshMapItemTitles();
             BloodhoundOrder matchedOrder = null;
             boolean matchedByUid = false;
+            BloodhoundOrder senderOnlyCandidate = null;
+            int senderOnlyCount = 0;
             boolean hasSenderMetadata = senderUid != null || conversationId != null
                     || senderCallsign != null;
             for (BloodhoundOrder order : orders) {
@@ -101,6 +107,11 @@ public class BloodhoundOrderManager implements ChatManagerMapComponent.ChatMessa
                         && containsWholeValue(normalizedText, order.getContact());
                 if (!senderMatches && !legacyTextMatches) {
                     continue;
+                }
+
+                if (senderMatches && order.getStatus() != BloodhoundOrder.Status.Complete) {
+                    senderOnlyCandidate = order;
+                    senderOnlyCount++;
                 }
 
                 String targetUid = order.getMapItemUid();
@@ -131,6 +142,12 @@ public class BloodhoundOrderManager implements ChatManagerMapComponent.ChatMessa
                 }
             }
 
+            // Short replies like "RGR" name no target; accept them only when the
+            // sender has exactly one open order.
+            if (matchedOrder == null && senderOnlyCount == 1) {
+                matchedOrder = senderOnlyCandidate;
+            }
+
             if (matchedOrder != null && matchedOrder.getStatus() != update.status) {
                 matchedOrder.setStatus(update.status);
                 notifyOrderChange();
@@ -155,10 +172,17 @@ public class BloodhoundOrderManager implements ChatManagerMapComponent.ChatMessa
 
     private StatusUpdate getStatusUpdate(String text) {
         String normalized = text.toLowerCase(Locale.ROOT);
-        if (normalized.contains("bloodhounding") || normalized.contains("bloodhonding")) {
+        boolean rgr = containsWholeValue(normalized, "rgr")
+                || containsWholeValue(normalized, "roger");
+        boolean nPos = containsWholeValue(normalized, "npos");
+        // A message carrying both short codes is the order prompt itself, not a reply.
+        if (rgr && nPos) {
+            return null;
+        }
+        if (normalized.contains("bloodhounding") || normalized.contains("bloodhonding") || rgr) {
             return new StatusUpdate(BloodhoundOrder.Status.Bloodhounding);
         }
-        if (normalized.contains("in position")) {
+        if (normalized.contains("in position") || nPos) {
             return new StatusUpdate(BloodhoundOrder.Status.Complete);
         }
         return null;

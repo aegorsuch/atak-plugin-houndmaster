@@ -9,7 +9,7 @@ Houndmaster provides a focused Bloodhound order workflow within ATAK. It lets an
 2. Tap the **+** icon beside the Houndmaster title.
 3. Select a target map item.
 4. Select the contact that should receive the order.
-5. Houndmaster sends the target to the selected contact and records the order as **Sent**.
+5. Houndmaster sends the target to the selected contact, sends them a chat message such as `ODIN-ATAK sent you S-F. RGR to start, nPos to close`, and records the order as **Sent**.
 6. The dashboard remains available so the order and its current status can be monitored.
 
 ## Statuses
@@ -19,10 +19,12 @@ The dashboard displays one of three statuses:
 | Display status | Meaning |
 | --- | --- |
 | **Sent** | The order was created and sent to the selected contact. |
-| **Active** | The contact replied with `Bloodhounding` and is working the order. The parser also accepts the observed misspelling `Bloodhonding`. |
-| **Complete** | The contact replied with `In Position`, indicating the order is complete. |
+| **Active** | The contact replied with `RGR`, `Roger`, or `Bloodhounding` and is working the order. The parser also accepts the observed misspelling `Bloodhonding`. |
+| **Complete** | The contact replied with `nPos` or `In Position`, indicating the order is complete. |
 
-Incoming status messages are matched first by the assigned contact's UID and the target's UID when those IDs are present in the message. For existing replies that identify the target by title, Houndmaster uses the assigned sender identity and updates only an unambiguous match. If a tracked map item's title changes, its saved UID lets Houndmaster use the current title.
+Replies are case-insensitive, and `RGR`, `Roger`, and `nPos` must appear as standalone words.
+
+Incoming status messages are matched first by the assigned contact's UID and the target's UID when those IDs are present in the message. For existing replies that identify the target by title, Houndmaster uses the assigned sender identity and updates only an unambiguous match. A reply that names no target, such as a bare `RGR`, updates the sender's order only when that contact has exactly one open order; otherwise it is ignored. If a tracked map item's title changes, its saved UID lets Houndmaster use the current title.
 
 ## Managing Orders
 
