@@ -157,6 +157,7 @@ public class RecyclerViewDropDown extends DropDownReceiver implements
             return;
         }
         com.atakmap.android.cot.CotMapComponent.getExternalDispatcher().dispatchToContact(cotEvent, target);
+        sendOrderChat(mapItem.getTitle(), target);
         android.widget.Toast.makeText(_plugin, "Sent " + mapItem.getTitle() + " to " + contactName,
                 android.widget.Toast.LENGTH_SHORT).show();
         BloodhoundOrder order = new BloodhoundOrder(
@@ -166,5 +167,19 @@ public class RecyclerViewDropDown extends DropDownReceiver implements
                 contact.getUID(),
                 BloodhoundOrder.Status.Sent);
         BloodhoundOrderManager.getInstance().addOrder(order);
+    }
+
+    private void sendOrderChat(String targetTitle, com.atakmap.android.contact.Contact target) {
+        String sender = _mapView.getDeviceCallsign();
+        if (sender == null || sender.isEmpty())
+            sender = "Houndmaster";
+        String text = sender + " sent you " + targetTitle + ". RGR to start, nPos to close";
+        try {
+            com.atakmap.android.chat.ChatManagerMapComponent.getInstance()
+                    .sendMessage(text, java.util.Collections.singletonList(target));
+        } catch (RuntimeException e) {
+            // The map item was already sent; a chat failure should not block the order.
+            com.atakmap.coremap.log.Log.w("Houndmaster", "Failed to send order chat", e);
+        }
     }
 }
