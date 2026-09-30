@@ -37,6 +37,10 @@ Incoming status messages are matched first by the assigned contact's UID and the
 
 The project supports ATAK-CIV, ATAK-GOV, and ATAK-MIL product flavors.
 
+## Versioning
+
+The plugin version is `<ATAK SDK version>-<commit hash>`, for example `5.6.0-1c34d70`. APKs are named `ATAK-Plugin-Houndmaster-<ATAK SDK version>-<commit hash>-<flavor>-<build type>.apk`, for example `ATAK-Plugin-Houndmaster-5.6.0-1c34d70-civ-release.apk`.
+
 ## Repositories
 
 The TAK Forge repository (`git.tak.gov`) is canonical. The GitHub repository is a secondary mirror maintained as a backup of `develop`.
