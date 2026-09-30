@@ -8,6 +8,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import com.atakmap.android.dropdown.DropDownReceiver;
 import com.atakmap.android.houndmaster.plugin.R;
+import com.atakmap.android.maps.MapEvent;
+import com.atakmap.android.maps.MapEventDispatcher;
 import com.atakmap.android.maps.MapItem;
 import com.atakmap.android.maps.MapView;
 import com.atakmap.android.util.time.TimeListener;
@@ -16,7 +18,8 @@ import com.atakmap.android.util.time.TimeViewUpdater;
 /**
  * Drop-down menu to show only contacts in a RecyclerView, labeled "Contacts"
  */
-public class ContactsRecyclerViewDropDown extends DropDownReceiver implements TimeListener {
+public class ContactsRecyclerViewDropDown extends DropDownReceiver implements TimeListener,
+        MapEventDispatcher.MapEventDispatchListener {
     private final MapView _mapView;
     private final Context _plugin;
     private final TimeViewUpdater _timeUpdater;
@@ -34,8 +37,11 @@ public class ContactsRecyclerViewDropDown extends DropDownReceiver implements Ti
         _view = LayoutInflater.from(_plugin).inflate(R.layout.recycler_view, mapView, false);
         _rView = _view.findViewById(R.id.rView);
         _adapter = new RecyclerViewAdapter(_mapView, _plugin, true); // true = contacts only
+        _adapter.bindSearch(_view);
         _rView.setAdapter(_adapter);
         _rView.setLayoutManager(new LinearLayoutManager(_plugin, LinearLayoutManager.VERTICAL, false));
+        _mapView.getMapEventDispatcher().addMapEventListener(MapEvent.ITEM_ADDED, this);
+        _mapView.getMapEventDispatcher().addMapEventListener(MapEvent.ITEM_REMOVED, this);
         // Set label to "Contacts"
         View label = _view.findViewById(R.id.recyclerViewLabel);
         if (label instanceof android.widget.TextView) {
@@ -56,7 +62,14 @@ public class ContactsRecyclerViewDropDown extends DropDownReceiver implements Ti
 
     @Override
     public void disposeImpl() {
+        _mapView.getMapEventDispatcher().removeMapEventListener(MapEvent.ITEM_ADDED, this);
+        _mapView.getMapEventDispatcher().removeMapEventListener(MapEvent.ITEM_REMOVED, this);
         _timeUpdater.unregister(this);
+    }
+
+    @Override
+    public void onMapEvent(MapEvent event) {
+        _mapView.post(() -> _adapter.refreshItems());
     }
 
     @Override
