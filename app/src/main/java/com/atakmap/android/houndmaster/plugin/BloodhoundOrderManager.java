@@ -48,13 +48,17 @@ public class BloodhoundOrderManager implements ChatManagerMapComponent.ChatMessa
         return INSTANCE;
     }
 
-    public synchronized void addOrder(BloodhoundOrder order) {
-        orders.add(order);
+    public void addOrder(BloodhoundOrder order) {
+        synchronized (this) {
+            orders.add(order);
+        }
         notifyOrderChange();
     }
 
-    public synchronized void removeOrder(BloodhoundOrder order) {
-        orders.remove(order);
+    public void removeOrder(BloodhoundOrder order) {
+        synchronized (this) {
+            orders.remove(order);
+        }
         notifyOrderChange();
     }
 
@@ -92,68 +96,69 @@ public class BloodhoundOrderManager implements ChatManagerMapComponent.ChatMessa
         }
         String conversationId = message.getString("conversationId");
         String senderCallsign = message.getString("senderCallsign");
+        boolean changed;
         synchronized (this) {
-            boolean titlesChanged = refreshMapItemTitles();
-            BloodhoundOrder matchedOrder = null;
-            boolean matchedByUid = false;
-            BloodhoundOrder senderOnlyCandidate = null;
-            int senderOnlyCount = 0;
-            boolean hasSenderMetadata = senderUid != null || conversationId != null
-                    || senderCallsign != null;
-            for (BloodhoundOrder order : orders) {
-                boolean senderMatches = senderMatches(order, senderUid, conversationId,
-                        senderCallsign);
-                boolean legacyTextMatches = !hasSenderMetadata
-                        && containsWholeValue(normalizedText, order.getContact());
-                if (!senderMatches && !legacyTextMatches) {
-                    continue;
-                }
+            changed = applyStatusUpdate(normalizedText, senderUid, conversationId,
+                    senderCallsign, update);
+        }
+        if (changed) {
+            notifyOrderChange();
+        }
+    }
 
-                if (senderMatches && order.getStatus() != BloodhoundOrder.Status.Complete) {
-                    senderOnlyCandidate = order;
-                    senderOnlyCount++;
-                }
-
-                String targetUid = order.getMapItemUid();
-                boolean targetUidMatches = targetUid != null
-                        && containsWholeValue(normalizedText, targetUid);
-                boolean targetTitleMatches = containsWholeValue(normalizedText, order.getMapItemTitle());
-                if (!targetUidMatches && !targetTitleMatches) {
-                    continue;
-                }
-
-                if (targetUidMatches) {
-                    if (matchedByUid) {
-                        if (titlesChanged) {
-                            notifyOrderChange();
-                        }
-                        return;
-                    }
-                    matchedOrder = order;
-                    matchedByUid = true;
-                } else if (!matchedByUid) {
-                    if (matchedOrder != null) {
-                        if (titlesChanged) {
-                            notifyOrderChange();
-                        }
-                        return;
-                    }
-                    matchedOrder = order;
-                }
+    private boolean applyStatusUpdate(String normalizedText, String senderUid,
+            String conversationId, String senderCallsign, StatusUpdate update) {
+        boolean titlesChanged = refreshMapItemTitles();
+        BloodhoundOrder matchedOrder = null;
+        boolean matchedByUid = false;
+        BloodhoundOrder senderOnlyCandidate = null;
+        int senderOnlyCount = 0;
+        boolean hasSenderMetadata = senderUid != null || conversationId != null
+                || senderCallsign != null;
+        for (BloodhoundOrder order : orders) {
+            boolean senderMatches = senderMatches(order, senderUid, conversationId,
+                    senderCallsign);
+            boolean legacyTextMatches = !hasSenderMetadata
+                    && containsWholeValue(normalizedText, order.getContact());
+            if (!senderMatches && !legacyTextMatches) {
+                continue;
             }
 
-            // A targetless reply can only identify an order when the sender has one open order.
-            if (matchedOrder == null && senderOnlyCount == 1
-                    && isBareStatusReply(normalizedText)) {
-                matchedOrder = senderOnlyCandidate;
+            if (senderMatches && order.getStatus() != BloodhoundOrder.Status.Complete) {
+                senderOnlyCandidate = order;
+                senderOnlyCount++;
             }
 
-            if (matchedOrder != null && matchedOrder.advanceTo(update.status)) {
-                notifyOrderChange();
-            } else if (titlesChanged) {
-                notifyOrderChange();
+            String targetUid = order.getMapItemUid();
+            boolean targetUidMatches = targetUid != null
+                    && containsWholeValue(normalizedText, targetUid);
+            boolean targetTitleMatches = containsWholeValue(normalizedText,
+                    order.getMapItemTitle());
+            if (!targetUidMatches && !targetTitleMatches) {
+                continue;
+            }
+
+            if (targetUidMatches) {
+                if (matchedByUid) {
+                    return titlesChanged;
+                }
+                matchedOrder = order;
+                matchedByUid = true;
+            } else if (!matchedByUid) {
+                if (matchedOrder != null) {
+                    return titlesChanged;
+                }
+                matchedOrder = order;
             }
         }
+
+        // A targetless reply can only identify an order when the sender has one open order.
+        if (matchedOrder == null && senderOnlyCount == 1
+                && isBareStatusReply(normalizedText)) {
+            matchedOrder = senderOnlyCandidate;
+        }
+
+        return matchedOrder != null && matchedOrder.advanceTo(update.status) || titlesChanged;
     }
 
     private boolean senderMatches(BloodhoundOrder order, String senderUid,

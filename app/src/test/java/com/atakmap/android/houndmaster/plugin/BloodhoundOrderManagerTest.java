@@ -6,6 +6,7 @@ import org.junit.After;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -62,6 +63,22 @@ public class BloodhoundOrderManagerTest {
         assertEquals(BloodhoundOrder.Status.Bloodhounding, order.getStatus());
         reply("In Position S-F", "ODIN");
         assertEquals(BloodhoundOrder.Status.Complete, order.getStatus());
+    }
+
+    @Test
+    public void orderChangeListenersRunOutsideManagerLock() {
+        BloodhoundOrderManager.OrderChangeListener listener =
+                () -> assertFalse(Thread.holdsLock(manager));
+        manager.addOrderChangeListener(listener);
+        try {
+            BloodhoundOrder order = new BloodhoundOrder(
+                    "S-F", "ODIN", BloodhoundOrder.Status.Sent);
+            manager.addOrder(order);
+            reply("RGR S-F", "ODIN");
+            assertEquals(BloodhoundOrder.Status.Bloodhounding, order.getStatus());
+        } finally {
+            manager.removeOrderChangeListener(listener);
+        }
     }
 
     private void reply(String text, String sender) {
