@@ -50,6 +50,35 @@ The TAK Forge repository (`git.tak.gov`) is canonical. The GitHub repository is 
 
 Development follows feature branches merged into the canonical repository's `develop` branch, which is then pushed to the GitHub mirror.
 
+## TAK Forge CI/CD
+
+`.gitlab-ci.yml` uses the shared `devsecops/gitlab-ci-common` build-and-sign
+template, matching Physio Dashboard and WearTAK Companion. Pushes to `develop`
+run `release_build_and_sign` with JDK 17 for the `civ` variant. Other branches do
+not run this build job. Houndmaster continues to target ATAK 5.6.0.
+
+The shared launcher handles authenticated TAK dependency access, building,
+signing, and build/report artifacts. It requires access to the shared template,
+TAK runners, artifact repositories, and signing service. Keep credentials and
+signing keys in Forge CI services/configuration, not in Git.
+
+The build supports `takrepo.url`, `takrepo.user`, and `takrepo.password` Gradle/local
+properties and the launcher's underscore-form `takrepo_url`, `takrepo_user`, and
+`takrepo_password` properties. Dotted properties take precedence. The launcher
+can provide a root-level, untracked `signing.properties` with `storeFile`,
+`storePassword`, `keyAlias`, and `keyPassword`; a relative `storeFile` is resolved
+from `app`. Without that file, the existing local signing defaults are preserved.
+
+The shared template exposes manual `release_internal` and `distribute_resources`
+jobs on protected branches. Building does not automatically publish or distribute
+the plugin. Production publication uses the shared template's protected
+maintenance-branch and plugin-metadata requirements; a successful develop build
+is not production approval.
+
+This pipeline runs on canonical TAK Forge only. It does not push to the GitHub
+mirror or update its `dev` prerelease; the separate post-merge release workflow
+still handles the source ZIP and CIV debug APK.
+
 ## Rights
 
 Unlimited Rights granted to TAK Product Center.
