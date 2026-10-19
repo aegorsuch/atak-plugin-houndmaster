@@ -75,9 +75,25 @@ the plugin. Production publication uses the shared template's protected
 maintenance-branch and plugin-metadata requirements; a successful develop build
 is not production approval.
 
-This pipeline runs on canonical TAK Forge only. It does not push to the GitHub
-mirror or update its `dev` prerelease; the separate post-merge release workflow
-still handles the source ZIP and CIV debug APK.
+The `publish_github_pipeline_release` job publishes only the signed CIV release
+APK from a successful protected `develop` push to the GitHub mirror's
+`takgov-pipeline` rolling release, titled **TAK.gov CI/CD Pipeline Release**.
+It runs only when canonical Forge `develop` and the GitHub `develop` mirror both
+match the pipeline commit. The job verifies the APK signature and uploaded
+bytes; it does not publish the AAB, debug APK, source archive, or CI reports.
+Numbered releases, the `dev` prerelease, and unrelated assets are left alone.
+
+Enable publication by adding a protected, masked `GITHUB_RELEASE_TOKEN` CI/CD
+variable to the TAK Forge project. Use a fine-grained GitHub token scoped only
+to `aegorsuch/atak-plugin-houndmaster` with **Contents: read and write**
+permission. Do not copy a developer's local GitHub CLI token into CI or commit
+credentials. The publisher records its own APK asset names in the rolling
+release description and only replaces assets it previously recorded. It moves
+only the dedicated `takgov-pipeline` rolling tag; numbered and other tags are
+not modified.
+
+This pipeline runs on canonical TAK Forge only; mirroring source to GitHub
+remains a separate operation.
 
 ## Rights
 
