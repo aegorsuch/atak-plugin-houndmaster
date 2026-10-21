@@ -9,7 +9,7 @@ release_build_and_sign:
   variables:
     variants: "civ"
   rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
 publish_github_pipeline_release:
   stage: .post
@@ -31,4 +31,4 @@ publish_github_pipeline_release:
     - python3 -m unittest discover -s tests -p 'test_publish_github_release.py'
     - python3 scripts/publish_github_release.py
   rules:
-    - if: '$CI_COMMIT_BRANCH == "develop" && $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_PROTECTED == "true"'
+    - if: '$CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_PROTECTED == "true"'

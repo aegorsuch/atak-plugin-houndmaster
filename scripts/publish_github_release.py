@@ -124,18 +124,18 @@ class GitHubApi:
             raise PublishError("GitHub asset deletion returned HTTP " + str(status))
 
 
-def latest_develop_sha(repository_url):
+def latest_main_sha(repository_url):
     result = subprocess.run(
-        ["git", "ls-remote", repository_url, "refs/heads/develop"],
+        ["git", "ls-remote", repository_url, "refs/heads/main"],
         check=False,
         capture_output=True,
         text=True,
     )
     if result.returncode != 0:
-        raise PublishError("Could not verify the canonical develop branch head")
+        raise PublishError("Could not verify the canonical main branch head")
     fields = result.stdout.strip().split()
-    if len(fields) != 2 or fields[1] != "refs/heads/develop":
-        raise PublishError("Could not read the canonical develop branch head")
+    if len(fields) != 2 or fields[1] != "refs/heads/main":
+        raise PublishError("Could not read the canonical main branch head")
     return fields[0].lower()
 
 
@@ -202,7 +202,7 @@ class ReleasePublisher:
         self,
         env,
         api=None,
-        head_reader=latest_develop_sha,
+        head_reader=latest_main_sha,
         apk_verifier=verify_signed_apk,
     ):
         self.env = env
@@ -212,12 +212,12 @@ class ReleasePublisher:
 
     def assert_current_head(self, commit_sha):
         if self.head_reader(self.env["CI_REPOSITORY_URL"]) != commit_sha:
-            raise PublishError("This pipeline is no longer the canonical develop head")
+            raise PublishError("This pipeline is no longer the canonical main head")
         mirror = self.api.request_json(
-            "GET", f"/repos/{GITHUB_REPOSITORY}/commits/develop"
+            "GET", f"/repos/{GITHUB_REPOSITORY}/commits/main"
         )
         if mirror.get("sha", "").lower() != commit_sha:
-            raise PublishError("The GitHub develop mirror does not match this pipeline")
+            raise PublishError("The GitHub main mirror does not match this pipeline")
 
     def run(self):
         required = (
@@ -235,10 +235,10 @@ class ReleasePublisher:
         if (
             self.env["CI_SERVER_HOST"] != "git.tak.gov"
             or self.env["CI_PROJECT_PATH"] != GITHUB_REPOSITORY
-            or self.env["CI_COMMIT_BRANCH"] != "develop"
+            or self.env["CI_COMMIT_BRANCH"] != "main"
             or self.env["CI_PIPELINE_SOURCE"] != "push"
         ):
-            raise PublishError("Only canonical develop push pipelines may publish")
+            raise PublishError("Only canonical main push pipelines may publish")
 
         commit_sha = self.env["CI_COMMIT_SHA"].lower()
         if not re.fullmatch(r"[0-9a-f]{40}", commit_sha):

@@ -48,7 +48,7 @@ class FakeGitHubApi:
         return [asset for asset, _ in self.assets.values()]
 
     def request_json(self, method, path, payload=None, allow_not_found=False):
-        if path.endswith("/commits/develop"):
+        if path.endswith("/commits/main"):
             return {"sha": self.branch_sha}
         if path.endswith("/releases/tags/takgov-pipeline"):
             return self.release
@@ -102,7 +102,7 @@ class ReleasePublisherTests(unittest.TestCase):
         self.env = {
             "CI_SERVER_HOST": "git.tak.gov",
             "CI_PROJECT_PATH": "aegorsuch/atak-plugin-houndmaster",
-            "CI_COMMIT_BRANCH": "develop",
+            "CI_COMMIT_BRANCH": "main",
             "CI_PIPELINE_SOURCE": "push",
             "CI_COMMIT_SHA": COMMIT_SHA,
             "CI_REPOSITORY_URL": "https://git.tak.gov/aegorsuch/atak-plugin-houndmaster.git",
@@ -213,7 +213,7 @@ class ReleasePublisherTests(unittest.TestCase):
             asset["id"] for asset, _ in api.assets.values() if asset["name"] == old_name
         )
 
-        with self.assertRaisesRegex(PublishError, "no longer the canonical develop head"):
+        with self.assertRaisesRegex(PublishError, "no longer the canonical main head"):
             publisher.run()
 
         self.assertIn(old_asset_id, api.assets)

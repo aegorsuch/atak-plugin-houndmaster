@@ -46,14 +46,14 @@ The plugin version is `<ATAK SDK version>-<commit hash>`, for example `5.6.0-1c3
 
 ## Repositories
 
-The TAK Forge repository (`git.tak.gov`) is canonical. The GitHub repository is a secondary mirror maintained as a backup of `develop`.
+The TAK Forge repository (`git.tak.gov`) is canonical. The GitHub repository is a secondary mirror maintained as a backup of `main`.
 
-Development follows feature branches merged into the canonical repository's `develop` branch, which is then pushed to the GitHub mirror.
+Development follows feature branches merged into the canonical repository's `main` branch, which is then pushed to the GitHub mirror.
 
 ## TAK Forge CI/CD
 
 `.gitlab-ci.yml` uses the shared `devsecops/gitlab-ci-common` build-and-sign
-template, matching Physio Dashboard and WearTAK Companion. Pushes to `develop`
+template, matching Physio Dashboard and WearTAK Companion. Pushes to `main`
 run `release_build_and_sign` with JDK 17 for the `civ` variant. Other branches do
 not run this build job. Houndmaster continues to target ATAK 5.6.0.
 
@@ -72,13 +72,13 @@ from `app`. Without that file, the existing local signing defaults are preserved
 The shared template exposes manual `release_internal` and `distribute_resources`
 jobs on protected branches. Building does not automatically publish or distribute
 the plugin. Production publication uses the shared template's protected
-maintenance-branch and plugin-metadata requirements; a successful develop build
+maintenance-branch and plugin-metadata requirements; a successful main build
 is not production approval.
 
 The `publish_github_pipeline_release` job publishes only the signed CIV release
-APK from a successful protected `develop` push to the GitHub mirror's
+APK from a successful protected `main` push to the GitHub mirror's
 `takgov-pipeline` rolling release, titled **TAK.gov CI/CD Pipeline Release**.
-It runs only when canonical Forge `develop` and the GitHub `develop` mirror both
+It runs only when canonical Forge `main` and the GitHub `main` mirror both
 match the pipeline commit. The job verifies the APK signature and uploaded
 bytes; it does not publish the AAB, debug APK, source archive, or CI reports.
 Numbered releases, the `dev` prerelease, and unrelated assets are left alone.
