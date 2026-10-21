@@ -62,9 +62,9 @@ class FakeGitHubApi:
             self.writes.append(("update-release", payload))
             self.release.update(payload)
             return self.release
-        if path.endswith("/git/ref/tags/takgov-pipeline"):
-            if method == "GET":
-                return getattr(self, "tag_ref", None)
+        if path.endswith("/git/ref/tags/takgov-pipeline") and method == "GET":
+            return getattr(self, "tag_ref", None)
+        if path.endswith("/git/refs/tags/takgov-pipeline") and method == "PATCH":
             self.writes.append(("move-tag", payload))
             self.tag_ref = {"object": {"sha": payload["sha"]}}
             return self.tag_ref

@@ -346,7 +346,7 @@ class ReleasePublisher:
         elif ref.get("object", {}).get("sha", "").lower() != commit_sha:
             self.api.request_json(
                 "PATCH",
-                ref_path,
+                f"/repos/{GITHUB_REPOSITORY}/git/refs/tags/{RELEASE_TAG}",
                 {"sha": commit_sha, "force": True},
             )
 
