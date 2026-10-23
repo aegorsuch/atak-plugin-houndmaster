@@ -14,7 +14,6 @@ from scripts.publish_github_release import (
     ReleasePublisher,
     read_apk_metadata,
     read_owned_names,
-    release_asset_label,
     release_asset_name,
     update_release_body,
     update_marker,
@@ -213,7 +212,7 @@ class ReleasePublisherTests(unittest.TestCase):
         asset = list(api.assets.values())[0][0]
         self.assertEqual(asset["name"], ASSET_NAME)
         self.assertEqual(
-            asset["label"], release_asset_label("5.6.0-p160")
+            asset["label"], ASSET_NAME
         )
         self.assertEqual(api.release["name"], f"{RELEASE_TITLE} (5.6.0-p160)")
         self.assertIn(
@@ -231,10 +230,11 @@ class ReleasePublisherTests(unittest.TestCase):
         self.assertIn(self.env["CI_PIPELINE_URL"], api.release["body"])
         self.assertIn(f"Source commit: `{COMMIT_SHA}` on TAK.gov `main`", api.release["body"])
         self.assertIn(
-            f"[{release_asset_label('5.6.0-p160')}]",
+            f"[{ASSET_NAME}]",
             api.release["body"],
         )
         self.assertIn(ASSET_NAME, api.release["body"])
+        self.assertIn("Install the APK above.", api.release["body"])
         self.assertIn(
             hashlib.sha256(self.apk_bytes).hexdigest(), api.release["body"]
         )
@@ -266,9 +266,7 @@ class ReleasePublisherTests(unittest.TestCase):
         new_asset = next(
             asset for asset, _ in api.assets.values() if asset["name"] == ASSET_NAME
         )
-        self.assertEqual(
-            new_asset["label"], "Houndmaster 5.6.0-p160 CIV release APK"
-        )
+        self.assertEqual(new_asset["label"], ASSET_NAME)
         self.assertIn("Existing release notes", api.release["body"])
         verification_index = next(
             index for index, entry in enumerate(api.writes) if entry[0] == "verify"
@@ -291,7 +289,7 @@ class ReleasePublisherTests(unittest.TestCase):
         self.publisher(api).run()
 
         self.assertEqual(
-            api.assets[asset_id][0]["label"], release_asset_label("5.6.0-p160")
+            api.assets[asset_id][0]["label"], ASSET_NAME
         )
         self.assertFalse(any(entry[0] == "upload" for entry in api.writes))
         self.assertFalse(any(entry[0] == "delete-asset" for entry in api.writes))
