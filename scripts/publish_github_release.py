@@ -291,7 +291,7 @@ def release_asset_name(version):
 
 
 def release_asset_label(version):
-    return f"Houndmaster {version} CIV release APK"
+    return release_asset_name(version)
 
 
 def release_metadata(env, asset_name, asset_label, version, version_code, sha256):
@@ -349,6 +349,8 @@ def release_metadata(env, asset_name, asset_label, version, version_code, sha256
             f"- Source commit: `{env['CI_COMMIT_SHA'].lower()}` on TAK.gov `{env['CI_COMMIT_BRANCH']}`",
             f"- SHA256: `{sha256}`",
             f"- Download: [{asset_label}]({apk_url})",
+            "",
+            "Install the APK above.",
         ]
     )
     return "\n".join(lines)
