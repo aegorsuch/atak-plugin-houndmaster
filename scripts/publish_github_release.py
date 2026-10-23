@@ -294,65 +294,35 @@ def release_asset_label(version):
     return release_asset_name(version)
 
 
-def release_metadata(env, asset_name, asset_label, version, version_code, sha256):
+def release_metadata(env, version, version_code, sha256):
     pipeline_id = env.get("CI_PIPELINE_ID", "")
     pipeline_iid = env.get("CI_PIPELINE_IID", "")
-    if pipeline_id and not pipeline_id.isdigit():
-        raise PublishError("The global pipeline ID is invalid")
+    if not pipeline_id or not pipeline_id.isdigit():
+        raise PublishError("The global pipeline ID is required and must be numeric")
     if pipeline_iid and not pipeline_iid.isdigit():
         raise PublishError("The project pipeline IID is invalid")
+    if not pipeline_iid:
+        raise PublishError("The project pipeline IID is required")
 
     pipeline_url = env.get("CI_PIPELINE_URL", "")
-    if pipeline_id:
-        expected_url = (
-            f"https://{env['CI_SERVER_HOST']}/{env['CI_PROJECT_PATH']}"
-            f"/-/pipelines/{pipeline_id}"
-        )
-        if pipeline_url and pipeline_url != expected_url:
-            raise PublishError("The pipeline URL is not the canonical Forge pipeline")
-        pipeline_url = pipeline_url or expected_url
-    elif pipeline_url:
-        parsed = urllib.parse.urlsplit(pipeline_url)
-        prefix = f"/{env['CI_PROJECT_PATH']}/-/pipelines/"
-        pipeline_match = re.fullmatch(re.escape(prefix) + r"([0-9]+)", parsed.path)
-        if (
-            parsed.scheme != "https"
-            or parsed.hostname != env["CI_SERVER_HOST"]
-            or parsed.query
-            or parsed.fragment
-            or not pipeline_match
-        ):
-            raise PublishError("The pipeline URL is not the canonical Forge pipeline")
-        pipeline_id = pipeline_match.group(1)
-
-    apk_url = (
-        f"https://github.com/{GITHUB_REPOSITORY}/releases/download/"
-        f"{urllib.parse.quote(RELEASE_TAG, safe='')}/"
-        f"{urllib.parse.quote(asset_name, safe='')}"
+    expected_url = (
+        f"https://{env['CI_SERVER_HOST']}/{env['CI_PROJECT_PATH']}"
+        f"/-/pipelines/{pipeline_id}"
     )
-    build = "GitLab pipeline"
-    if pipeline_id:
-        build += f" **{pipeline_id}**"
-    if pipeline_iid:
-        build += f" (project pipeline **{pipeline_iid}**)"
+    if pipeline_url and pipeline_url != expected_url:
+        raise PublishError("The pipeline URL is not the canonical Forge pipeline")
+    pipeline_url = pipeline_url or expected_url
     lines = [
         f"Automatically published stable Houndmaster {env['CI_COMMIT_BRANCH']}-channel CIV plugin build.",
         "",
         f"- APK version: **{version}** (versionCode **{version_code}**)",
+        f"- Build: GitLab pipeline **{pipeline_id}** (project pipeline **{pipeline_iid}**)",
+        f"- Pipeline: {pipeline_url}",
+        f"- Source commit: `{env['CI_COMMIT_SHA'].lower()}` on TAK.gov `{env['CI_COMMIT_BRANCH']}`",
+        f"- SHA256: `{sha256}`",
+        "",
+        "Install the APK above. GitHub's \"Source code\" archives come from the fixed release anchor tag, not from this build; the source commit above is authoritative and may not yet be mirrored to GitHub.",
     ]
-    if pipeline_id or pipeline_iid:
-        lines.append(f"- Build: {build}")
-    if pipeline_url:
-        lines.append(f"- Pipeline: {pipeline_url}")
-    lines.extend(
-        [
-            f"- Source commit: `{env['CI_COMMIT_SHA'].lower()}` on TAK.gov `{env['CI_COMMIT_BRANCH']}`",
-            f"- SHA256: `{sha256}`",
-            f"- Download: [{asset_label}]({apk_url})",
-            "",
-            "Install the APK above.",
-        ]
-    )
     return "\n".join(lines)
 
 
@@ -388,7 +358,9 @@ class ReleasePublisher:
             "CI_PIPELINE_SOURCE",
             "CI_COMMIT_SHA",
             "CI_REPOSITORY_URL",
+            "CI_PIPELINE_ID",
             "CI_PIPELINE_IID",
+            "CI_PIPELINE_URL",
             "GITHUB_RELEASE_TOKEN",
         )
         missing = [name for name in required if not self.env.get(name)]
@@ -435,8 +407,6 @@ class ReleasePublisher:
         local_digest = hashlib.sha256(apk_path.read_bytes()).hexdigest()
         metadata = release_metadata(
             self.env,
-            asset_name,
-            asset_label,
             apk_metadata["version_name"],
             apk_metadata["version_code"],
             local_digest,

@@ -83,13 +83,13 @@ followed by the verified product version and project pipeline IID (for example,
 `Houndmaster-<product-version>-p<IID>.apk`; the signed APK's manifest version
 and versionCode remain unchanged. The generated release details include the
 full manifest version and versionCode, canonical TAK Forge pipeline
-identifiers and link, full source commit, SHA-256 digest, and a readable APK
-download link. The GitHub asset label exactly matches its filename, following
-WearTAK's release convention. The visible release body follows the same order
-as WearTAK: version, build, pipeline, source commit, and SHA-256, followed by
-the download link and install note. Generated details are replaced in place
-on later publishes; manual release notes remain intact. Existing asset names
-and download URLs are not renamed during metadata updates.
+identifiers and link, full source commit, and SHA-256 digest. The GitHub asset
+label exactly matches its filename, following WearTAK's release convention.
+The visible release body follows the same layout as WearTAK: an intro line,
+five bullets for version, build, pipeline, source commit, and SHA-256, then
+the standard Source code archive/install note. Generated details are replaced
+in place on later publishes; manual release notes remain intact. Existing
+asset names and download URLs are not renamed during metadata updates.
 It runs only when canonical Forge `main` and the GitHub `main` mirror both
 match the pipeline commit. The job verifies the APK signature and uploaded
 bytes; it does not publish the AAB, debug APK, source archive, or CI reports.
