@@ -229,15 +229,26 @@ class ReleasePublisherTests(unittest.TestCase):
         )
         self.assertIn(self.env["CI_PIPELINE_URL"], api.release["body"])
         self.assertIn(f"Source commit: `{COMMIT_SHA}` on TAK.gov `main`", api.release["body"])
-        self.assertIn(
-            f"[{ASSET_NAME}]",
-            api.release["body"],
+        generated_body = api.release["body"].split(
+            "<!-- houndmaster-release-metadata:start -->\n", 1
+        )[1].split("\n<!-- houndmaster-release-metadata:end -->", 1)[0]
+        self.assertEqual(
+            generated_body,
+            "\n".join(
+                [
+                    "Automatically published stable Houndmaster main-channel CIV plugin build.",
+                    "",
+                    "- APK version: **5.6.0-851ba896** (versionCode **5830160**)",
+                    "- Build: GitLab pipeline **1799402** (project pipeline **160**)",
+                    f"- Pipeline: {self.env['CI_PIPELINE_URL']}",
+                    f"- Source commit: `{COMMIT_SHA}` on TAK.gov `main`",
+                    f"- SHA256: `{hashlib.sha256(self.apk_bytes).hexdigest()}`",
+                    "",
+                    "Install the APK above. GitHub's \"Source code\" archives come from the fixed release anchor tag, not from this build; the source commit above is authoritative and may not yet be mirrored to GitHub.",
+                ]
+            ),
         )
-        self.assertIn(ASSET_NAME, api.release["body"])
-        self.assertIn("Install the APK above.", api.release["body"])
-        self.assertIn(
-            hashlib.sha256(self.apk_bytes).hexdigest(), api.release["body"]
-        )
+        self.assertNotIn("- Download:", api.release["body"])
         self.assertIn("<!-- houndmaster-release-metadata:start -->", api.release["body"])
         self.assertIn("<!-- houndmaster-release-metadata:end -->", api.release["body"])
         self.assertIn("<!-- houndmaster-ci-assets:", api.release["body"])
