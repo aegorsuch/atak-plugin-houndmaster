@@ -1,9 +1,11 @@
 
 # Houndmaster Plugin
 
+## Purpose and Capabilities
+
 Houndmaster provides a focused Bloodhound order workflow within ATAK. It lets an operator select a map item, assign a contact, send the selected item, and monitor the contact's response.
 
-## Order Workflow
+### Order Workflow
 
 1. Open the Houndmaster dashboard from the ATAK plugin/tool menu.
 2. Tap the **+** icon beside the Houndmaster title.
@@ -12,7 +14,7 @@ Houndmaster provides a focused Bloodhound order workflow within ATAK. It lets an
 5. Houndmaster sends the target to the selected contact, sends them a chat message such as `ODIN-ATAK sent you S-F. RGR to start, nPos to close`, and records the order as **Sent**.
 6. The dashboard remains available so the order and its current status can be monitored.
 
-## Statuses
+### Statuses
 
 The dashboard displays one of three statuses:
 
@@ -28,7 +30,7 @@ Incoming status messages are matched first by the assigned contact's UID and the
 
 Statuses only move forward: a late `Roger` cannot reopen a completed order.
 
-## Managing Orders
+### Managing Orders
 
 - Orders are shown in a compact single-line list with target, recipient, and status.
 - Tap the trash icon to delete an order.
@@ -36,21 +38,39 @@ Statuses only move forward: a late `Roger` cannot reopen a completed order.
 - The dashboard refreshes when an order is added, deleted, or updated by an incoming status message.
 - The target and contact lists can be searched by title or callsign and update when eligible map items appear or disappear.
 
-## Release Targets
+## Status
+
+The configured compatibility target is ATAK 5.6.0. Operational readiness, release approval, and field-validation status are not documented.
+
+### Release Targets
 
 The project supports ATAK-CIV, ATAK-GOV, and ATAK-MIL product flavors.
 
-## Versioning
+## Point of Contacts
+
+### Point of Contact
+
+Alex Gorsuch on chat.tak.gov or Signal
+
+## Ports Required
+
+No plugin-specific listening ports or fixed network endpoints are defined in the plugin source. Target delivery and order chat use ATAK's CoT dispatcher and chat APIs. Required transport ports depend on the host ATAK network configuration; deployment-specific ports are not documented here.
+
+## Equipment Required
+
+An Android device running a compatible ATAK 5.6.0 installation and the corresponding Houndmaster plugin flavor is required. Sending orders requires a reachable ATAK contact through the host ATAK communications configuration. No additional Houndmaster-specific peripheral is identified in the repository.
+
+## Equipment Supported
+
+ATAK-CIV, ATAK-GOV, and ATAK-MIL build flavors are configured. Specific phone, tablet, and peripheral models and a verified hardware compatibility matrix are not documented. Configured build flavors do not establish device certification or operational readiness.
+
+## Compilation
+
+### Versioning
 
 The plugin version is `<ATAK SDK version>-<commit hash>`, for example `5.6.0-1c34d70`. APKs are named `ATAK-Plugin-Houndmaster-<ATAK SDK version>-<commit hash>-<flavor>-<build type>.apk`, for example `ATAK-Plugin-Houndmaster-5.6.0-1c34d70-civ-release.apk`.
 
-## Repositories
-
-The TAK Forge repository (`git.tak.gov`) is canonical. The GitHub repository is a secondary mirror maintained as a backup of `main`.
-
-Development follows feature branches merged into the canonical repository's `main` branch, which is then pushed to the GitHub mirror.
-
-## TAK Forge CI/CD
+### TAK Forge CI/CD
 
 `.gitlab-ci.yml` uses the shared `devsecops/gitlab-ci-common` build-and-sign
 template, matching Physio Dashboard and WearTAK Companion. Pushes to `main`
@@ -107,12 +127,20 @@ not modified.
 This pipeline runs on canonical TAK Forge only; mirroring source to GitHub
 remains a separate operation.
 
-## Rights
+## Developer Notes
+
+### Repositories
+
+The TAK Forge repository (`git.tak.gov`) is canonical. The GitHub repository is a secondary mirror maintained as a backup of `main`.
+
+Development follows feature branches merged into the canonical repository's `main` branch, which is then pushed to the GitHub mirror.
+
+## License
+
+### Rights
 
 Unlimited Rights granted to TAK Product Center.
 
-## Point of Contact
-
-Alex Gorsuch on chat.tak.gov or Signal
+No standalone license file or additional license terms are present in this checkout. The existing rights statement above is preserved; no new license is granted by this README reformat.
 
 ---
