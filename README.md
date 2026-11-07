@@ -141,6 +141,10 @@ Development follows feature branches merged into the canonical repository's `mai
 
 Unlimited Rights granted to TAK Product Center.
 
-No standalone license file or additional license terms are present in this checkout. The existing rights statement above is preserved; no new license is granted by this README reformat.
+Houndmaster plugin source is licensed under the GNU General Public License,
+version 3 only (GPL-3.0-only); see [LICENSE](LICENSE). Third-party materials
+retain their respective licenses. The bundled Libre Franklin fonts in
+`docs/user_manual/fonts/` are under the SIL OFL; Latin Modern fonts are under
+the GUST Font License. See the corresponding license files in that directory.
 
 ---
